@@ -1,0 +1,122 @@
+#import financial data with Yahoo finance
+
+import yfinance as yf
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+#US
+sp = yf.download(tickers = "^GSPC",  # list of tickers
+            period = "10y",         # time period
+            interval = "1d",       # trading interval
+            prepost = False,       # download pre/post market hours data?
+            repair = True)         # repair obvious price errors e.g. 100x?
+sp = sp.iloc[:,0]
+df=sp
+
+###############################################################################
+#LONDON
+ftse = yf.download(tickers = "^FTSE",  # list of tickers
+            period = "10y",         # time period
+            interval = "1d",       # trading interval
+            prepost = False,       # download pre/post market hours data?
+            repair = True)         # repair obvious price errors e.g. 100x?
+ftse = ftse.iloc[:,0]
+#Switch to USD
+gbp = yf.download(tickers = "GBPUSD=X",  # list of tickers
+            period = "10y",         # time period
+            interval = "1d",       # trading interval
+            prepost = False,       # download pre/post market hours data?
+            repair = True)         # repair obvious price errors e.g. 100x?
+gbp = gbp.iloc[:,0]
+ftse = ftse*gbp
+
+#df = pd.merge(ftse.to_frame(), df, on='Date', how='outer',suffixes='FTSE')
+
+###############################################################################
+#FR
+cac = yf.download(tickers = "^FCHI",  # list of tickers
+            period = "10y",         # time period
+            interval = "1d",       # trading interval
+            prepost = False,       # download pre/post market hours data?
+            repair = True)         # repair obvious price errors e.g. 100x?
+cac = cac.iloc[:,0]
+#df = pd.merge(cac.to_frame(), df, on='Date', how='outer')
+
+#Switch to USD
+eur = yf.download(tickers = "EURUSD=X",  # list of tickers
+            period = "10y",         # time period
+            interval = "1d",       # trading interval
+            prepost = False,       # download pre/post market hours data?
+            repair = True)         # repair obvious price errors e.g. 100x?
+eur = eur.iloc[:,0]
+cac = cac*eur
+#df = pd.merge(cac.to_frame(), df, on='Date', how='outer',suffixes='CAC')
+###############################################################################
+#BEL
+bel = yf.download(tickers = "^bfx",  # list of tickers
+            period = "10y",         # time period
+            interval = "1d",       # trading interval
+            prepost = False,       # download pre/post market hours data?
+            repair = True)         # repair obvious price errors e.g. 100x?
+bel = bel.iloc[:,0]
+
+bel = bel*eur
+#df = pd.merge(bel.to_frame(), df, on='Date', how='outer',suffixes='BEL')
+
+###############################################################################
+#JP
+jp = yf.download(tickers = "^N225",  # list of tickers
+            period = "10y",         # time period
+            interval = "1d",       # trading interval
+            prepost = False,       # download pre/post market hours data?
+            repair = True)         # repair obvious price errors e.g. 100x?
+jp = jp.iloc[:,0]
+#Switch to USD
+jpy = yf.download(tickers = "jpy=X",  # list of tickers
+            period = "10y",         # time period
+            interval = "1d",       # trading interval
+            prepost = False,       # download pre/post market hours data?
+            repair = True)         # repair obvious price errors e.g. 100x?
+jpy = jpy.iloc[:,0]
+jp = jp*eur
+#df = pd.merge(jp.to_frame(), df, on='Date', how='outer',suffixes='N225')
+###############################################################################
+#CN
+cn = yf.download(tickers = "^HSI",  # list of tickers
+            period = "10y",         # time period
+            interval = "1d",       # trading interval
+            prepost = False,       # download pre/post market hours data?
+            repair = True)         # repair obvious price errors e.g. 100x?
+cn = cn.iloc[:,0]
+#Switch to USD
+cny = yf.download(tickers = "cny=X",  # list of tickers
+            period = "10y",         # time period
+            interval = "1d",       # trading interval
+            prepost = False,       # download pre/post market hours data?
+            repair = True)         # repair obvious price errors e.g. 100x?
+cny = cny.iloc[:,0]
+cny = cny*eur
+#df = pd.merge(cn.to_frame(), df, on='Date', how='outer',suffixes='HSI')
+###############################################################################
+#Merge all
+df = pd.merge(ftse.to_frame(), df, on='Date', how='outer', suffixes=('_FTSE', ''))
+df = pd.merge(cac.to_frame(), df, on='Date', how='outer', suffixes=('_CAC', ''))
+df = pd.merge(bel.to_frame(), df, on='Date', how='outer', suffixes=('_BEL', ''))
+df = pd.merge(jp.to_frame(), df, on='Date', how='outer', suffixes=('_N225', ''))
+df = pd.merge(cn.to_frame(), df, on='Date', how='outer', suffixes=('_HSI', ''))
+
+
+
+###############################################################################
+#Fill nan value by previous value
+df_fill = df.fillna(method='ffill')
+
+#Build the matrice
+matrix = df_fill.corr(
+    method = 'pearson',  # The method of correlation
+    min_periods = 1      # Min number of observations required
+)
+
+sns.heatmap(matrix, annot=True)
+plt.show()
